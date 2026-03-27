@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>影視作品分析寫作產生器 | Screenwriter's Toolkit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .serif-font {
+            font-family: 'Noto Serif TC', serif;
+        }
+        /* 模擬劇本格式的輸入區 */
+        .script-input {
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.6;
+        }
+        /* 自定義捲軸 */
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        .active-tab {
+            background-color: white;
+            border-left-color: #3b82f6 !important;
+            font-weight: bold;
+            color: #2563eb;
+        }
+        @media print {
+            .no-print { display: none; }
+        }
+        /* 新增：儲存提示樣式 */
+        .save-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+        }
+        .save-indicator.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-slate-900 text-white p-6 shadow-lg">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold tracking-wider"><i class="fas fa-film mr-2"></i>影視作品分析室</h1>
+                <p class="text-slate-400 text-sm mt-1">Screenwriter's Analysis Toolkit</p>
+            </div>
+            <div class="text-xs text-slate-500 border border-slate-700 px-3 py-1 rounded">
+                專業編劇視角 v1.1
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow p-4 md:p-8">
+        <div class="max-w-4xl mx-auto space-y-6">
+
+            <!-- 1. 基本資料卡片 -->
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+                <h2 class="text-lg font-bold mb-4 flex items-center">
+                    <span class="bg-blue-100 text-blue-600 w-8 h-8 flex items-center justify-center rounded-full mr-3 text-sm">1</span>
+                    分析者與作品資訊
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">姓名 / 作者</label>
+                        <input type="text" id="studentName" class="w-full border-slate-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 p-2 border" placeholder="輸入您的姓名">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">學號 / 代號 (選填)</label>
+                        <input type="text" id="studentID" class="w-full border-slate-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 p-2 border">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-slate-600 mb-1">分析作品名稱 (片名/劇名)</label>
+                        <input type="text" id="filmTitle" class="w-full border-slate-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 p-2 border" placeholder="例如：教父、寄生上流...">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-slate-600 mb-1">作品類型 (Genre)</label>
+                        <input type="text" id="filmGenre" class="w-full border-slate-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 p-2 border" placeholder="例如：犯罪驚悚、浪漫喜劇、科幻...">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 題目產生器 -->
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold flex items-center">
+                        <span class="bg-purple-100 text-purple-600 w-8 h-8 flex items-center justify-center rounded-full mr-3 text-sm">2</span>
+                        選擇分析維度
+                    </h2>
+                    <button onclick="openGuide()" class="text-sm bg-purple-50 text-purple-700 px-3 py-1.5 rounded-full hover:bg-purple-100 transition border border-purple-200 font-medium">
+                        <i class="fas fa-book-open mr-1"></i> 查看分析維度詳解
+                    </button>
+                </div>
+                
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button onclick="generatePrompt('structure')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full text-sm transition font-medium">
+                        <i class="fas fa-project-diagram mr-1"></i> 敘事結構 (Structure)
+                    </button>
+                    <button onclick="generatePrompt('character')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full text-sm transition font-medium">
+                        <i class="fas fa-user-circle mr-1"></i> 角色曲線 (Character Arc)
+                    </button>
+                    <button onclick="generatePrompt('visual')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full text-sm transition font-medium">
+                        <i class="fas fa-eye mr-1"></i> 視聽語言 (Visuals/Audio)
+                    </button>
+                    <button onclick="generatePrompt('theme')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full text-sm transition font-medium">
+                        <i class="fas fa-icons mr-1"></i> 主題與潛文本 (Theme)
+                    </button>
+                    <button onclick="generatePrompt('random')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full text-sm transition font-medium shadow-md">
+                        <i class="fas fa-random mr-1"></i> 隨機挑戰
+                    </button>
+                </div>
+
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 relative">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1 block">當前分析題目</label>
+                    <p id="promptDisplay" class="text-lg font-medium text-slate-800 serif-font min-h-[3rem] flex items-center">
+                        請點擊上方按鈕，生成專業的分析視角...
+                    </p>
+                    <input type="hidden" id="currentCategory" value="">
+                </div>
+            </div>
+
+            <!-- 3. 寫作區 -->
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-emerald-500">
+                <h2 class="text-lg font-bold mb-4 flex items-center">
+                    <span class="bg-emerald-100 text-emerald-600 w-8 h-8 flex items-center justify-center rounded-full mr-3 text-sm">3</span>
+                    分析撰寫
+                </h2>
+                <div class="mb-2 flex justify-between items-end">
+                    <label class="block text-sm text-slate-500">請針對題目進行論述 (建議字數：500字以上)</label>
+                    <span id="wordCount" class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">0 字</span>
+                </div>
+                <textarea id="essayContent" class="w-full h-96 p-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 outline-none text-lg leading-relaxed text-slate-700 script-input" placeholder="由此開始輸入您的分析...&#10;&#10;提示：好的分析不只是重述劇情，而是解釋「為什麼」編導要這樣設計。&#10;&#10;若對術語有疑問，請點擊上方的「查看分析維度詳解」。"></textarea>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer / Action Bar -->
+    <footer class="bg-white border-t border-slate-200 p-4 sticky bottom-0 shadow-inner z-10 no-print">
+        <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="text-sm text-slate-500">
+                <i class="fas fa-info-circle mr-1"></i> 完成後可直接匯出為 Word 檔繳交
+                <!-- 新增：手動儲存按鈕 -->
+                <button onclick="manualSave()" class="ml-3 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded transition">
+                    <i class="fas fa-save mr-1"></i> 手動儲存
+                </button>
+                <button onclick="clearStorage()" class="ml-2 text-xs bg-red-50 hover:bg-red-100 text-red-600 px-2 py-1 rounded transition">
+                    <i class="fas fa-trash mr-1"></i> 清除暫存
+                </button>
+            </div>
+            <button onclick="exportToWord()" class="w-full md:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg transform hover:-translate-y-0.5 transition flex items-center justify-center">
+                <i class="fas fa-file-word mr-2"></i> 匯出作業 (.doc)
+            </button>
+        </div>
+    </footer>
+
+    <!-- 新增：儲存提示元件 -->
+    <div id="saveIndicator" class="save-indicator">
+        <i class="fas fa-check mr-2"></i> 已儲存
+    </div>
+
+    <!-- Guide Modal -->
+    <div id="guideModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden transform transition-all duration-300 scale-95 opacity-0" id="guideModalContent">
+            
+            <!-- Modal Header -->
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-slate-50">
+                <div class="flex items-center">
+                    <div class="bg-purple-600 text-white w-8 h-8 rounded-lg flex items-center justify-center mr-3">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">影視分析維度詳解手冊</h3>
+                        <p class="text-xs text-slate-500">Screenwriter's Analysis Guide</p>
+                    </div>
+                </div>
+                <button onclick="closeGuide()" class="text-slate-400 hover:text-red-500 transition w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body (Flex layout for Tabs + Content) -->
+            <div class="flex flex-1 overflow-hidden">
+                
+                <!-- Sidebar Tabs (Desktop) -->
+                <div class="w-1/4 bg-slate-50 border-r border-slate-200 overflow-y-auto hidden md:block">
+                    <nav class="flex flex-col py-2">
+                        <button onclick="switchTab('structure')" id="tab-structure" class="text-left px-5 py-4 text-sm font-medium text-slate-600 hover:bg-white hover:text-blue-600 border-l-4 border-transparent transition active-tab">
+                            <div class="font-bold mb-1">一、敘事結構</div>
+                            <div class="text-xs text-slate-400 font-normal">Narrative Structure</div>
+                        </button>
+                        <button onclick="switchTab('character')" id="tab-character" class="text-left px-5 py-4 text-sm font-medium text-slate-600 hover:bg-white hover:text-blue-600 border-l-4 border-transparent transition">
+                            <div class="font-bold mb-1">二、角色曲線</div>
+                            <div class="text-xs text-slate-400 font-normal">Character Arc</div>
+                        </button>
+                        <button onclick="switchTab('visual')" id="tab-visual" class="text-left px-5 py-4 text-sm font-medium text-slate-600 hover:bg-white hover:text-blue-600 border-l-4 border-transparent transition">
+                            <div class="font-bold mb-1">三、視聽語言</div>
+                            <div class="text-xs text-slate-400 font-normal">Visuals & Audio</div>
+                        </button>
+                        <button onclick="switchTab('theme')" id="tab-theme" class="text-left px-5 py-4 text-sm font-medium text-slate-600 hover:bg-white hover:text-blue-600 border-l-4 border-transparent transition">
+                            <div class="font-bold mb-1">四、主題與潛文本</div>
+                            <div class="text-xs text-slate-400 font-normal">Theme & Subtext</div>
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Content Area -->
+                <div class="flex-1 overflow-y-auto custom-scroll p-6 md:p-10 bg-white relative" id="guideTextContainer">
+                    
+                    <!-- Mobile Tab Selector (Visible only on mobile) -->
+                    <div class="md:hidden mb-6">
+                        <select onchange="switchTab(this.value)" class="w-full p-2 border border-slate-300 rounded-lg text-slate-700 font-bold bg-slate-50">
+                            <option value="structure">一、敘事結構</option>
+                            <option value="character">二、角色曲線</option>
+                            <option value="visual">三、視聽語言</option>
+                            <option value="theme">四、主題與潛文本</option>
+                        </select>
+                    </div>
+
+                    <!-- Structure Content -->
+                    <div id="content-structure" class="guide-section">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-4 pb-2 border-b border-slate-200">一、敘事結構 (Narrative Structure)</h2>
+                        <p class="text-slate-600 mb-6 leading-relaxed">結構是電影的骨架。無論是好萊塢的三幕劇（Three-Act Structure）還是非線性敘事，結構決定了觀眾接收訊息的順序與情緒節奏。</p>
+                        
+                        <div class="space-y-6">
+                            <div class="bg-blue-50 p-5 rounded-lg border border-blue-100">
+                                <h3 class="font-bold text-blue-800 text-lg mb-2">1. 激勵事件 (Inciting Incident)</h3>
+                                <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                                    <li><strong>定義：</strong>打破主角原有生活平衡的單一事件。</li>
+                                    <li><strong>分析重點：</strong>它是否發生得夠早（通常在電影前10-15分鐘）？它是否迫使主角必須做出反應，否則生活將無法繼續？</li>
+                                    <li class="italic text-slate-500">例：《哈利波特》中海格告訴哈利「你是一名巫師」。</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="bg-slate-50 p-5 rounded-lg border border-slate-200">
+                                <h3 class="font-bold text-slate-800 text-lg mb-2">2. 第一轉折點 (Plot Point 1)</h3>
+                                <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                                    <li><strong>定義：</strong>第一幕結束，進入第二幕的關卡。主角決定離開舒適圈（舊世界），踏上旅程（新世界）。</li>
+                                    <li><strong>分析重點：</strong>這必須是主角「主動」的選擇，而非被動接受。一旦跨過這點，就沒有回頭路了。</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-slate-50 p-5 rounded-lg border border-slate-200">
+                                <h3 class="font-bold text-slate-800 text-lg mb-2">3. 中間點 (Midpoint)</h3>
+                                <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                                    <li><strong>定義：</strong>電影正中間的轉折。通常伴隨著一個重大揭露或事件，改變了主角的行動目標或風險（Stakes）。</li>
+                                    <li><strong>分析重點：</strong>觀察主角是否從「被動應對」轉為「主動出擊」。這裡通常會出現「偽勝利」（看似贏了其實危機更大）或「偽失敗」。</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-slate-50 p-5 rounded-lg border border-slate-200">
+                                <h3 class="font-bold text-slate-800 text-lg mb-2">4. 第三幕高潮 (Climax)</h3>
+                                <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                                    <li><strong>定義：</strong>全片張力最強的時刻，主角與反派（或阻礙力量）的最終決戰。</li>
+                                    <li><strong>分析重點：</strong>主角是否面臨「兩難選擇」？真正的勝利通常不是打敗敵人，而是主角戰勝了自己的心魔（內在缺陷）。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Character Content -->
+                    <div id="content-character" class="guide-section hidden">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-4 pb-2 border-b border-slate-200">二、角色曲線 (Character Arc)</h2>
+                        <p class="text-slate-600 mb-6 leading-relaxed">角色是電影的靈魂。觀眾不一定會記得劇情細節，但會記得角色的感受。好的角色設計通常包含內在與外在的衝突。</p>
+                        
+                        <div class="space-y-6">
+                            <div class="bg-purple-50 p-5 rounded-lg border border-purple-100">
+                                <h3 class="font-bold text-purple-800 text-lg mb-2">1. 外在慾望 (Want) vs. 內在需求 (Need)</h3>
+                                <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                                    <li><strong>Want：</strong>主角表面上想要的東西（例如：贏得比賽、獲得寶藏、追到愛人）。這是推動劇情的動力。</li>
+                                    <li><strong>Need：</strong>主角心靈深處真正缺乏的東西（例如：學會謙虛、原諒自己、誠實）。這是推動成長的動力。</li>
+                                    <li><strong>分析重點：</strong>結局時，主角通常會「犧牲 Want」來「獲得 Need」。</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-slate-50 p-5 rounded-lg border border-slate-200">
+                                <h3 class="font-bold text-slate-800 text-lg mb-2">2. 幽靈 / 傷痕 (The Ghost / The Wound)</h3>
+                                <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                                    <li><strong>定義：</strong>發生在故事開始之前，對主角造成心理陰影的創傷事件。</li>
+                                    <li><strong>分析重點：</strong>這個傷痕如何成為主角現在的恐懼？反派往往會戳中這個痛點。</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-slate-50 p-5 rounded-lg border border-slate-200">
+                                <h3 class="font-bold text-slate-800 text-lg mb-2">3. 救貓咪 (Save the Cat)</h3>
+                                <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                                    <li><strong>定義：</strong>Blake Snyder 提出的編劇術語。指在主角登場初期，安排他做一件令人討喜或令人同情的事（如救一隻貓），讓觀眾站在他這一邊。</li>
+                                    <li><strong>分析重點：</strong>即使是反英雄（Anti-hero）或壞人主角，編劇用了什麼手法讓你「理解」或「同情」他？</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visual Content -->
+                    <div id="content-visual" class="guide-section hidden">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-4 pb-2 border-b border-slate-200">三、視聽語言 (Visuals & Audio)</h2>
+                        <p class="text-slate-600 mb-6 leading-relaxed">電影是「展演」（Show），不是「講述」（Tell）。導演與攝影師如何利用畫面說故事，往往比台詞更重要。</p>
+                        
+                        <div class="space-y-6">
+                            <div class="bg-teal-50 p-5 rounded-lg border border-teal-100">
+                                <h3 class="font-bold text-teal-800 text-lg mb-2">1. 場面調度 (Mise-en-scène)</h3>
+                                <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                                    <li><strong>定義：</strong>鏡頭內所有元素的安排，包含佈景、光線、演員走位、服裝等。</li>
+                                    <li><strong>分析重點：</strong>觀察角色在畫面中的位置。誰站得高？誰在陰影裡？這反映了角色之間的權力關係（Power Dynamics）。</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-slate-50 p-5 rounded-lg border border-slate-200">
+                                <h3 class="font-bold text-slate-800 text-lg mb-2">2. 色彩母題 (Color Motif)</h3>
+                                <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                                    <li><strong>定義：</strong>特定顏色在電影中重複出現，代表特定意義。</li>
+                                    <li><strong>分析重點：</strong>例如《教父》中的「橘子」代表死亡；《駭客任務》中的「綠色」代表虛擬代碼，「藍色」代表現實冷酷。</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-slate-50 p-5 rounded-lg border border-slate-200">
+                                <h3 class="font-bold text-slate-800 text-lg mb-2">3. 潛台詞與聲音 (Subtext & Sound)</h3>
+                                <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                                    <li><strong>定義：</strong>除了對白之外的聽覺元素，以及對白底下的真實含義。</li>
+                                    <li><strong>分析重點：</strong>這場戲如果關掉聲音，你能看懂發生什麼事嗎？音樂是為了煽情，還是為了反諷（例如快樂的畫面配上悲傷的音樂）？</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Theme Content -->
+                    <div id="content-theme" class="guide-section hidden">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-4 pb-2 border-b border-slate-200">四、主題與潛文本 (Theme & Subtext)</h2>
+                        <p class="text-slate-600 mb-6 leading-relaxed">主題是電影的「核心論證」。一部好電影通常在探討一個普世價值的問題，而劇情就是對這個問題的辯證過程。</p>
+                        
+                        <div class="space-y-6">
+                            <div class="bg-amber-50 p-5 rounded-lg border border-amber-100">
+                                <h3 class="font-bold text-amber-800 text-lg mb-2">1. 中心辯證 (Central Argument)</h3>
+                                <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                                    <li><strong>定義：</strong>電影試圖探討的二元對立價值。</li>
+                                    <li><strong>分析重點：</strong>例如「自由 vs. 安全」、「個人 vs. 集體」、「復仇 vs. 寬恕」。主角與反派通常分別站在這兩端。</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-slate-50 p-5 rounded-lg border border-slate-200">
+                                <h3 class="font-bold text-slate-800 text-lg mb-2">2. 視覺符號 (Visual Symbols)</h3>
+                                <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                                    <li><strong>定義：</strong>具象的物品，承載了抽象的概念。</li>
+                                    <li><strong>分析重點：</strong>例如《全面啟動》的陀螺（代表現實的真偽）、《大國民》的玫瑰花蕾（代表失去的純真）。這個物品的出現、毀壞或傳遞，都象徵著主題的變化。</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-slate-50 p-5 rounded-lg border border-slate-200">
+                                <h3 class="font-bold text-slate-800 text-lg mb-2">3. 核心前提 (Logline / Premise)</h3>
+                                <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                                    <li><strong>定義：</strong>一句話講完故事的核心衝突與諷刺性。</li>
+                                    <li><strong>分析重點：</strong>所有的劇情支線是否都回扣到這個核心前提？如果有偏離核心的劇情，通常就是結構鬆散的來源。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Guide Footer -->
+                    <div class="mt-8 pt-4 border-t border-slate-200 text-sm text-slate-500 italic">
+                        寫作小提醒：最好的影視分析，不是把上述所有點都寫一遍，而是挑選 1-2 個最有感觸的維度深入挖掘。找出那些「一般觀眾看過即忘，但你發現別有深意」的細節，這就是專業分析的價值。
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- 題庫資料 (編劇專業視角) ---
+        const prompts = {
+            structure: [
+                "請定位本片的「激勵事件」（Inciting Incident）。它發生在第幾分鐘？這個事件如何具體地破壞了主角原本生活的平衡？",
+                "分析第一幕進入第二幕的轉折點（Plot Point 1）。主角做出了什麼不可逆轉的選擇，導致他必須離開舊世界進入新世界？",
+                "拆解本片的「中間點」（Midpoint）。故事調性是否在此發生轉變（例如從被動轉為主動，或虛假勝利/失敗）？",
+                "分析本片的第三幕高潮（Climax）。主角是否面臨了「兩難選擇」？這個選擇如何證明了主角的內在成長？",
+                "請畫出本片的時間軸結構。這是線性敘事、非線性敘事還是環狀結構？這樣的結構對觀眾的懸念體驗有何影響？"
+            ],
+            character: [
+                "分析主角的「外在慾望」（Want）與「內在需求」（Need）。這兩者在故事中是否發生衝突？結局時他獲得了什麼？",
+                "主角是否存在「幽靈」（Ghost）或「傷痕」？這個過去的創傷如何阻礙他在故事前半段採取正確的行動？",
+                "請分析本片的「反派」或「阻礙力量」。反派是否由主角的弱點鏡像反射而成？反派的存在如何逼迫主角成長？",
+                "描述主角的「救貓咪」時刻（Save the Cat）或其變體。編劇如何在開場10分鐘內建立觀眾對主角的同理心或關注？",
+                "分析次要角色（Sidekick/Mentor）。他們的功能是提供訊息、反映主角的另一面，還是作為主題的辯證？"
+            ],
+            visual: [
+                "選擇一個關鍵場景，分析其「場面調度」（Mise-en-scène）。角色在畫面中的位置權力關係如何隨劇情變化？",
+                "分析本片的色彩運用。是否存在特定的「色彩母題」（Color Motif）來象徵角色的心理狀態或劇情走向？",
+                "從剪輯節奏分析一場動作戲或爭吵戲。鏡頭長度與剪接速度如何控制觀眾的緊張感？",
+                "分析聲音設計（Sound Design）。是否有特定的音效或配樂重複出現（Leitmotif），其代表的意義發生了什麼變化？",
+                "探討攝影機運動。這部片傾向使用手持攝影還是穩定腳架？這如何影響影片的「寫實感」或「旁觀感」？"
+            ],
+            theme: [
+                "本片的「中心辯證」（Central Argument）是什麼？正反雙方（通常透過主角與反派）分別代表了什麼價值觀？",
+                "找出片中重複出現的三個「視覺符號」（Visual Symbols）。它們在故事開始、中段與結尾的意義是否有演變？",
+                "分析劇本的「潛文本」（Subtext）。舉出一場對話戲，說明角色口中說的和心裡想的如何不同？",
+                "這部電影如何處理社會議題或普世價值？它是在強化刻板印象，還是試圖顛覆觀眾的預設觀點？",
+                "如果用一句話總結這部電影的「核心前提」（Logline/Premise），你會怎麼寫？這句話是否貫穿了每一場戲？"
+            ]
+        };
+
+        const categoryNames = {
+            structure: "敘事結構分析",
+            character: "角色曲線分析",
+            visual: "視聽語言分析",
+            theme: "主題與符號分析",
+            random: "綜合隨機分析"
+        };
+
+        let lastActiveCategory = 'structure'; // 預設類別
+
+        // --- 字數統計 ---
+        document.getElementById('essayContent').addEventListener('input', function(e) {
+            const text = e.target.value;
+            const count = text.replace(/\s/g, '').length;
+            document.getElementById('wordCount').innerText = count + " 字";
+            // 新增：輸入時自動儲存
+            autoSave();
+        });
+
+        // --- 新增：暫存功能相關程式碼 ---
+        // 儲存鍵名
+        const STORAGE_KEY = 'filmAnalysisToolkit_data';
+        
+        // 顯示儲存提示
+        function showSaveIndicator() {
+            const indicator = document.getElementById('saveIndicator');
+            indicator.classList.add('show');
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 2000);
+        }
+
+        // 自動儲存函數
+        function autoSave() {
+            try {
+                const data = {
+                    studentName: document.getElementById('studentName').value,
+                    studentID: document.getElementById('studentID').value,
+                    filmTitle: document.getElementById('filmTitle').value,
+                    filmGenre: document.getElementById('filmGenre').value,
+                    promptDisplay: document.getElementById('promptDisplay').innerText,
+                    currentCategory: document.getElementById('currentCategory').value,
+                    essayContent: document.getElementById('essayContent').value,
+                    lastActiveCategory: lastActiveCategory,
+                    saveTime: new Date().toLocaleString('zh-TW')
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                showSaveIndicator();
+            } catch (e) {
+                console.error('儲存失敗:', e);
+            }
+        }
+
+        // 手動儲存
+        function manualSave() {
+            autoSave();
+            alert('已成功儲存所有內容！');
+        }
+
+        // 還原儲存的資料
+        function restoreData() {
+            try {
+                const savedData = localStorage.getItem(STORAGE_KEY);
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    document.getElementById('studentName').value = data.studentName || '';
+                    document.getElementById('studentID').value = data.studentID || '';
+                    document.getElementById('filmTitle').value = data.filmTitle || '';
+                    document.getElementById('filmGenre').value = data.filmGenre || '';
+                    document.getElementById('promptDisplay').innerText = data.promptDisplay || '請點擊上方按鈕，生成專業的分析視角...';
+                    document.getElementById('currentCategory').value = data.currentCategory || '';
+                    document.getElementById('essayContent').value = data.essayContent || '';
+                    lastActiveCategory = data.lastActiveCategory || 'structure';
+                    
+                    // 更新字數統計
+                    const text = document.getElementById('essayContent').value;
+                    const count = text.replace(/\s/g, '').length;
+                    document.getElementById('wordCount').innerText = count + " 字";
+                    
+                    console.log(`已還原上次儲存的資料 (儲存時間：${data.saveTime})`);
+                }
+            } catch (e) {
+                console.error('還原失敗:', e);
+            }
+        }
+
+        // 清除儲存的資料
+        function clearStorage() {
+            if (confirm('確定要清除所有暫存的內容嗎？此操作無法復原！')) {
+                localStorage.removeItem(STORAGE_KEY);
+                alert('已清除所有暫存內容！');
+                // 重置表單
+                document.getElementById('studentName').value = '';
+                document.getElementById('studentID').value = '';
+                document.getElementById('filmTitle').value = '';
+                document.getElementById('filmGenre').value = '';
+                document.getElementById('promptDisplay').innerText = '請點擊上方按鈕，生成專業的分析視角...';
+                document.getElementById('currentCategory').value = '';
+                document.getElementById('essayContent').value = '';
+                document.getElementById('wordCount').innerText = '0 字';
+                lastActiveCategory = 'structure';
+            }
+        }
+
+        // 監聽表單變更，自動儲存
+        document.getElementById('studentName').addEventListener('change', autoSave);
+        document.getElementById('studentID').addEventListener('change', autoSave);
+        document.getElementById('filmTitle').addEventListener('change', autoSave);
+        document.getElementById('filmGenre').addEventListener('change', autoSave);
+
+        // --- 生成題目邏輯 ---
+        function generatePrompt(category) {
+            let pool = [];
+            let catName = categoryNames[category];
+            
+            // 更新最後活躍的類別，用於打開指南時自動跳轉
+            if (category !== 'random') {
+                lastActiveCategory = category;
+            }
+
+            if (category === 'random') {
+                pool = [].concat(prompts.structure, prompts.character, prompts.visual, prompts.theme);
+            } else {
+                pool = prompts[category];
+            }
+
+            const randomIndex = Math.floor(Math.random() * pool.length);
+            const selectedPrompt = pool[randomIndex];
+
+            const display = document.getElementById('promptDisplay');
+            display.innerText = selectedPrompt;
+            display.classList.remove('text-slate-400');
+            display.classList.add('text-slate-800');
+            
+            document.getElementById('currentCategory').value = category === 'random' ? "綜合分析" : catName;
+
+            display.parentElement.classList.add('ring-2', 'ring-purple-200');
+            setTimeout(() => display.parentElement.classList.remove('ring-2', 'ring-purple-200'), 300);
+            
+            // 新增：生成題目後自動儲存
+            autoSave();
+        }
+
+        // --- 指南 Modal 邏輯 ---
+        function openGuide(initialTab = null) {
+            const modal = document.getElementById('guideModal');
+            const content = document.getElementById('guideModalContent');
+            
+            // 決定要開啟哪個 Tab
+            const tabToOpen = initialTab || lastActiveCategory;
+            switchTab(tabToOpen);
+
+            modal.classList.remove('hidden');
+            // 動畫效果
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeGuide() {
+            const modal = document.getElementById('guideModal');
+            const content = document.getElementById('guideModalContent');
+            
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // 點擊背景關閉
+        document.getElementById('guideModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeGuide();
+            }
+        });
+
+        // Tab 切換
+        function switchTab(category) {
+            // 隱藏所有內容
+            document.querySelectorAll('.guide-section').forEach(el => el.classList.add('hidden'));
+            // 顯示選中內容
+            const targetContent = document.getElementById(`content-${category}`);
+            if (targetContent) targetContent.classList.remove('hidden');
+
+            // 移除所有 Tab 啟用狀態
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.classList.remove('active-tab', 'bg-white', 'text-blue-600', 'border-blue-500');
+                btn.classList.add('border-transparent');
+            });
+
+            // 啟用當前 Tab
+            const activeTab = document.getElementById(`tab-${category}`);
+            if (activeTab) {
+                activeTab.classList.add('active-tab');
+                activeTab.classList.remove('border-transparent');
+            }
+
+            // 手機版下拉選單同步
+            const mobileSelect = document.querySelector('select');
+            if(mobileSelect) mobileSelect.value = category;
+
+            // 捲動回頂部
+            document.getElementById('guideTextContainer').scrollTop = 0;
+        }
+
+        // --- 匯出 Word 邏輯 ---
+        function exportToWord() {
+            const name = document.getElementById('studentName').value || "未填寫姓名";
+            const id = document.getElementById('studentID').value || "";
+            const title = document.getElementById('filmTitle').value || "未填寫片名";
+            const genre = document.getElementById('filmGenre').value || "未填寫類型";
+            const category = document.getElementById('currentCategory').value || "自訂分析";
+            const prompt = document.getElementById('promptDisplay').innerText;
+            const content = document.getElementById('essayContent').value;
+            const date = new Date().toLocaleDateString('zh-TW');
+
+            if (prompt.includes("請點擊上方按鈕")) {
+                alert("請先選擇並生成一個分析題目！");
+                return;
+            }
+
+            if (!content.trim()) {
+                if(!confirm("分析內容目前為空，確定要匯出嗎？")) return;
+            }
+
+            const preHtml = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head>
+                    <meta charset="utf-8">
+                    <title>影視分析作業</title>
+                    <style>
+                        body { font-family: "新細明體", "PMingLiU", serif; font-size: 12pt; line-height: 1.5; }
+                        .header { text-align: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 20px; }
+                        .title { font-size: 18pt; font-weight: bold; }
+                        .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                        .meta-table td { border: 1px solid #999; padding: 8px; }
+                        .bg-gray { background-color: #f0f0f0; font-weight: bold; width: 15%; }
+                        .section-title { font-size: 14pt; font-weight: bold; margin-top: 20px; margin-bottom: 10px; color: #2c3e50; border-left: 5px solid #2c3e50; padding-left: 10px; }
+                        .prompt-box { background-color: #e8f4fc; padding: 15px; border: 1px solid #b3d7ff; margin-bottom: 20px; font-style: italic; }
+                        .content { white-space: pre-wrap; text-align: justify; font-size: 12pt; }
+                        .footer { margin-top: 50px; font-size: 10pt; color: #666; text-align: center; border-top: 1px solid #ccc; padding-top: 10px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="title">影視作品結構與美學分析報告</div>
+                        <p>生成日期：${date}</p>
+                    </div>
+
+                    <table class="meta-table">
+                        <tr>
+                            <td class="bg-gray">分析者姓名</td>
+                            <td>${name}</td>
+                            <td class="bg-gray">學號/代號</td>
+                            <td>${id}</td>
+                        </tr>
+                        <tr>
+                            <td class="bg-gray">作品名稱</td>
+                            <td>${title}</td>
+                            <td class="bg-gray">作品類型</td>
+                            <td>${genre}</td>
+                        </tr>
+                        <tr>
+                            <td class="bg-gray">分析維度</td>
+                            <td colspan="3">${category}</td>
+                        </tr>
+                    </table>
+
+                    <div class="section-title">分析題目</div>
+                    <div class="prompt-box">
+                        ${prompt}
+                    </div>
+
+                    <div class="section-title">分析內容</div>
+                    <div class="content">
+${content.replace(/\n/g, '<br>')}
+                    </div>
+
+                    <div class="footer">
+                        Generated by Screenwriter's Analysis Toolkit
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob(['\ufeff', preHtml], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            const cleanTitle = title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '');
+            const filename = `${name}_${cleanTitle}_影視分析.doc`;
+            
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // 新增：頁面載入時還原儲存的資料
+        window.addEventListener('load', function() {
+            restoreData();
+        });
+
+        // 新增：頁面關閉/離開時自動儲存
+        window.addEventListener('beforeunload', function() {
+            autoSave();
+        });
+    </script>
+</body>
+</html>
